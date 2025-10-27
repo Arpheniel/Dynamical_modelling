@@ -20,14 +20,15 @@ cmap.set_under(color = "white")
 
 np.set_printoptions(threshold=sys.maxsize)
 plt.get_cmap('inferno')
+
 scale = 42
 kpc_to_arcsec = 1/0.56
 N = 6000  # number of orbits
 M_total = 4.5e9  # in units of M_sun
 ML = 15.3 #M/L
 distance = 117490000# in [pc]
-incl = 48
-Filename = "M1e+07_O0_Rh169_Vh185_i42_a0_N6000_R1.00_GH_DensitySphHarm.npz"
+incl = 48 #inclination
+Filename = "M1e+07_O0_Rh169_Vh185_i42_a0_N6000_R1.00_GH_DensitySphHarm.npz" #agama model file name
 
 archive = np.load(Filename, allow_pickle=True, encoding='latin1')
 
@@ -547,4 +548,4 @@ axs[3, 3].xaxis.set_minor_locator(tcr.IndexLocator(2,offset = -2.5))
 axs[3, 3].tick_params(direction = "in",which = "major",width = 0.3,length = 2,labelsize =4)
 axs[3, 3].tick_params(direction = "in",which = "minor",width = 0.15,length = 1)
 
-fig.savefig("plots",format = "eps")
+fig.savefig("plots.pdf",format = "pdf")

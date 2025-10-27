@@ -85,26 +85,26 @@ path = PHOT.split('/')[0]
 fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(9, 6))
 ax.imshow(ph_gal)
 ax.set_title(BAND)
-fig.savefig(path + '/' + f'{GAL_NAME}_{BAND}',format = "eps")
+fig.savefig(path + '/' + f'{GAL_NAME}_{BAND}',format = "pdf")
 plt.clf()
 
 fig = plt.figure(figsize=(9, 6))
 gal = find_galaxy(ph_gal, binning= 4, fraction=0.6, level=None,
                 nblob=1, plot=True, quiet=False)
-fig.savefig(path + '/' + f'{GAL_NAME}_{BAND}_find',format = "eps")
+fig.savefig(path + '/' + f'{GAL_NAME}_{BAND}_find',format = "pdf")
 plt.clf()
 print(gal.pa)
-gal.pa = 50
+#gal.pa = 50
 fig = plt.figure(figsize=(9, 6))
 s_gal = sectors_photometry(ph_gal, gal.eps, gal.pa, gal.xpeak, gal.ypeak, minlevel=0, plot=1)
-fig.savefig(path + '/' + f'{GAL_NAME}_{BAND}_secphot',format = "eps")
+fig.savefig(path + '/' + f'{GAL_NAME}_{BAND}_secphot',format = "pdf")
 
 mge_gal = mge_fit_sectors(s_gal.radius, s_gal.angle, s_gal.counts, gal.eps,
                         bulge_disk=False, fignum=1, linear=False, negative=False,
                         ngauss=20, normpsf=1., outer_slope=4, plot=True, qbounds=None,
                         quiet=False, rbounds=None, scale=SCALE, sigmapsf=PSF, sol=0)
 
-plt.savefig(path + '/' + f'{GAL_NAME}_{BAND}-1d_MGEfit',format = "eps")
+plt.savefig(path + '/' + f'{GAL_NAME}_{BAND}-1d_MGEfit',format = "pdf")
 total_counts, sigma, q_obs = mge_gal.sol  # assign the solution to variables
 print(mge_gal.sol.T)  # Print a table of best-fitting MGE parameters
 surf = total_counts / (2 * np.pi * q_obs * sigma ** 2) * SCALE ** 2  # the Gaussians peak surface brightness
@@ -127,7 +127,7 @@ np.savetxt(path + '/' + f'converted_fits_{GAL_NAME}_{BAND}.txt', image)
 np.savetxt(path + '/' + f'model_{GAL_NAME}_{BAND}.txt', model)
 
 
-fig.savefig(path + '/' + f'{GAL_NAME}_{BAND}_contours',format = "eps")
+fig.savefig(path + '/' + f'{GAL_NAME}_{BAND}_contours',format = "pdf")
 
 
 spectro = fits.open(KINEM)  # open MANGA results of analysis

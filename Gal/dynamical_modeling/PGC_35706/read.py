@@ -2,59 +2,56 @@ import numpy as np, agama as _agama
 import matplotlib.pyplot as plt
 from matplotlib import ticker as tcr
 from matplotlib import transforms
+from astropy.io import fits
 
 M_total = 4.5e9 # in units of [M_sun]
-Max_rad = 20 # in [kpc]
+Max_rad = 15 # in [kpc]
 Filename = "M1e+07_O0_Rh169_Vh185_i42_a0_N6000_R1.00_GH_DensitySphHarm.npz"
 R_scale = 0.5696 # scale of kpc in AGAMA
 Im_scale = 42
 distance = 117490
+gamma = 0 # angle of rotation of losvd map
+model_index = 1
 
 archive = np.load(Filename, allow_pickle=True, encoding='latin1')
 
 LOSVD = archive['LOSVD']
 Lambda_z = archive['MOD_Lambda_z']
-circ2 = archive["circ2"]
+circ2 = archive["circ2"] # norm angular momentum
 Vel = archive["Velocity"]
 Upsilon = archive["Upsilon"]
-weights = archive["weights"]
-Rmean = archive["Rmean"]/(distance * np.pi / 648000)
+weights = archive["weights"][model_index]
+Rmean = archive["Rmean"]* R_scale/(distance * np.pi / 648000) # mean radius of orbit in [arcsec]
 cosincl = archive["cosincl"]
 ic = archive["ic"]
 inttime = archive["inttime"]
-DYN_COMP_LOSVD = archive["DYN_COMP_LOSVD"]
+DYN_COMP_LOSVD = archive["DYN_COMP_LOSVD"][model_index]
 
 Units = _agama.getUnits()
 
+spectr = fits.open("manga-8992-3704-MAPS-VOR10-MILESHC-MASTARSSP.fits")
+
+phot = fits.open("mosaic-00126063-PGC_35706-z-CCD4-image.fits")['CCD4'].data
+
+def surf_br(surf, M_sun):
+    return 10 ** (-(surf - M_sun - 21.57) / 2.5)
+
+
+def magnitudo(flx):
+    return 22.5 - 2.5 * np.log10(flx)
+    
+phot = magnitudo(phot)
+
+phot = surf_br(phot, 4)
+
+print(phot)
+
 bin_scheme = np.loadtxt("bins_PGC35706.txt")
 
-DYN_COMP_LOSVD = DYN_COMP_LOSVD[0]
-
-Lambda_z_bound = [0.5,1]
-
-def DYN_COMP_LOSVD_MAP(bounds):
-
-    LOSVD_plt = np.zeros((695,47))
-    
-    for r in range(21):
-        for l_z in range(int((1 + bounds[0])*10.5),int((1 + bounds[1])*10.5)): # 0 = -1, 11 = 0 , 21 = 1
-            LOSVD_plt +=  DYN_COMP_LOSVD[l_z][r]
-    return LOSVD_plt
-    
-LOSVD_plt = DYN_COMP_LOSVD_MAP(Lambda_z_bound)
-
-#LOSVD = LOSVD[0][0]
-
-GH_moments = _agama.ghMoments(matrix=LOSVD_plt * 15**-0.5,gridv=np.linspace(-250, 250, 46) * 15**0.5, degree=2, ghorder=6)[:,(1,2,6,7,8,9)]
-
-kinem_map = np.full((Im_scale,Im_scale),None,dtype=float)
 
 
-
-for bin_i in range(len(bin_scheme)):
-    kinem_map[int(bin_scheme[bin_i][0]+Im_scale/2)][int(bin_scheme[bin_i][1]+Im_scale/2)] = GH_moments[int(bin_scheme[bin_i][2])][0]
-
-gamma = 0
+kinem_map = spectr['STELLAR_SIGMA'].data
+kinem_map [(kinem_map  == 0)] = None
 
 tr = transforms.Affine2D().rotate_deg_around(Im_scale/2,Im_scale/2,gamma)
 
@@ -71,30 +68,364 @@ fig, ax = plt.subplots(figsize=(14*cm, 11.5*cm))
 cmap = plt.cm.nipy_spectral
 cmap.set_bad(color='White') # Set 'bad' values (NaNs) to red
 
-pc = ax.imshow(kinem_map,cmap = cmap,transform = tr + ax.transData,origin='lower',vmin = -200, vmax = 200)
+pc = ax.imshow(kinem_map,cmap = cmap,transform = tr + ax.transData,origin='lower',vmin = 100, vmax = 200)
 
 ax.yaxis.set_major_formatter(tcr.FuncFormatter(tickers_Y_formatter))
 ax.xaxis.set_major_formatter(tcr.FuncFormatter(tickers_X_formatter))
-ax.yaxis.set_major_locator(tcr.IndexLocator(10,offset = 1.5))
-ax.xaxis.set_major_locator(tcr.IndexLocator(10,offset = 1.5))
+ax.yaxis.set_major_locator(tcr.IndexLocator(12,offset = -3.5))
+ax.xaxis.set_major_locator(tcr.IndexLocator(12,offset = -3.5))
 
 ax.yaxis.set_minor_formatter(tcr.NullFormatter())
 ax.xaxis.set_minor_formatter(tcr.NullFormatter())
-ax.yaxis.set_minor_locator(tcr.IndexLocator(2,offset = 1.5))
-ax.xaxis.set_minor_locator(tcr.IndexLocator(2,offset = 1.5))
+ax.yaxis.set_minor_locator(tcr.IndexLocator(2,offset = 0.5))
+ax.xaxis.set_minor_locator(tcr.IndexLocator(2,offset = 0.5))
 
-ax.annotate(r"$M_{c}/M_{total} = 12$" + "%",(0.2,0.5), fontsize=15)
+#ax.annotate(r"$M_{c}/M_{total} = 12$" + "%",(0.2,0.5), fontsize=15)
 #ax.annotate(r"$M_{total} = 6.75 \cdot 10^{10} M_{\odot}$",(0,0.5),family='cursive', fontsize=15)
 
-ax.annotate(r"$V_{0}[km/s]$",(0,38),fontsize=15,style = "italic")
-ax.annotate(f"{Lambda_z_bound[1]} > $\lambda_z$ > {Lambda_z_bound[0]}",(25,39), fontsize=15)
+ax.annotate(r"$\sigma_{0}[km/s]$",(0,38),fontsize=15,style = "italic")
+#ax.annotate(r"$V_{0}[km/s]$",(0,38),fontsize=15,style = "italic")
+#ax.annotate(f"{Lambda_z_bound[1]} > $\lambda_z$ > {Lambda_z_bound[0]}",(25,39), fontsize=15)
 
 ax.set_xlabel("arcsec")
 ax.set_ylabel("arcsec")
-plt.title("PGC_35706" )
-ax.tick_params(direction = "in",which = "both")
+#plt.title("PGC 35706" )
+ax.tick_params(direction = "in",which = "both",labelsize = 6)
 fig.colorbar(pc,ax=ax)
-fig.savefig("kinem_map",format = "eps")
+fig.savefig("obs_kinem_map.pdf",format = "pdf")
+
+
+
+Lambda_z_bounds = [-1,1]
+
+def DYN_COMP_LOSVD_MAP(bounds,GH_moment):
+
+    LOSVD_plt = np.zeros((695,47))
+    
+    for r in range(21):
+        for l_z in range(int((1 + Lambda_z_bounds[0])*10.5),int((1 + Lambda_z_bounds[1])*10.5)): # 0 = -1, 11 = 0 , 21 = 1
+            LOSVD_plt +=  DYN_COMP_LOSVD[l_z][r]
+
+    GH_moments = _agama.ghMoments(matrix=LOSVD_plt * Upsilon[model_index]**-0.5,gridv=np.linspace(-250, 250, 46) * Upsilon[model_index]**0.5, degree=2, ghorder=6)[:,(1,2,6,7,8,9)]
+
+    kinem_map = np.full((Im_scale,Im_scale),None,dtype=float)
+
+    for bin_i in range(len(bin_scheme)):
+        kinem_map[int(bin_scheme[bin_i][0]+Im_scale/2)][int(bin_scheme[bin_i][1]+Im_scale/2)] = GH_moments[int(bin_scheme[bin_i][2])][GH_moment]
+    
+    return kinem_map
+
+tr = transforms.Affine2D().rotate_deg_around(Im_scale/2,Im_scale/2,gamma)
+
+def tickers_X_formatter(x, pos):
+    return f'{abs((x - Im_scale/2)/2):.0f}'
+def tickers_Y_formatter(y, pos): #for kinem
+    return f'{abs((y - Im_scale/2)/2):.0f}'
+    
+def tickers_Y_formatter_2(y, pos): #for phot
+    return f'{abs((y - Im_scale/2)+9):.0f}'
+
+#cm = 1/2.54
+#fig, ax = plt.subplots(figsize=(14*cm, 11.5*cm))
+
+cmap = plt.cm.nipy_spectral
+cmap.set_bad(color='White') # Set 'bad' values (NaNs) to white
+cmap_2 = plt.cm.inferno_r
+
+#kinem_map = kinem_map - spectr['STELLAR_VEL'].data
+
+Vel_map_obs = spectr['STELLAR_VEL'].data
+Vel_map_obs[(Vel_map_obs == 0)] = None
+
+fig, axs = plt.subplots(3, 3, sharex = False, sharey = False)
+
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+fig.subplots_adjust(hspace=0)
+fig.subplots_adjust(wspace=-0.58)
+
+### Vel obs vs Vel model ###
+
+Vel_min = -80
+Vel_max = 80
+
+Sig_min = 0
+Sig_max = 200
+
+pc = axs[1,0].imshow(Vel_map_obs,cmap = cmap,transform = tr + axs[1,0].transData,origin='lower',vmin = Vel_min, vmax = Vel_max)
+
+axs[1, 0].yaxis.set_major_locator(tcr.NullLocator())
+axs[1, 0].xaxis.set_major_locator(tcr.NullLocator())
+
+#axs[1, 0].yaxis.set_major_formatter(tcr.NullFormatter())
+axs[1, 0].xaxis.set_major_formatter(tcr.NullFormatter())
+
+axs[1,0].yaxis.set_major_formatter(tcr.FuncFormatter(tickers_Y_formatter))
+#axs[1,0].xaxis.set_major_formatter(tcr.FuncFormatter(tickers_X_formatter))
+axs[1,0].yaxis.set_major_locator(tcr.IndexLocator(12,offset = -3.5))
+axs[1,0].xaxis.set_major_locator(tcr.IndexLocator(12,offset = -3.5))
+
+axs[1,0].yaxis.set_minor_formatter(tcr.NullFormatter())
+axs[1,0].xaxis.set_minor_formatter(tcr.NullFormatter())
+axs[1,0].yaxis.set_minor_locator(tcr.IndexLocator(2,offset = 0.5))
+axs[1,0].xaxis.set_minor_locator(tcr.IndexLocator(2,offset = 0.5))
+
+axs[1,0].set_ylabel("arcsec")
+
+#ax.annotate(r"$M_{c}/M_{total} = 12$" + "%",(0.2,0.5), fontsize=15)
+#ax.annotate(r"$M_{total} = 6.75 \cdot 10^{10} M_{\odot}$",(0,0.5),family='cursive', fontsize=15)
+
+axs[1,0].annotate(r"$V_{0}[km/s]$",(2,37),fontsize=7,style = "italic")
+#axs[1,0].annotate(f"{Lambda_z_bounds[1]} > $\lambda_z$ > {Lambda_z_bounds[0]}",(25,39), fontsize=15)
+
+#axs[1,0].set_xlabel("arcsec")
+#axs[1,0].set_ylabel("arcsec")
+#plt.title("PGC_35706" )
+axs[1,0].tick_params(direction = "in",which = "both",labelsize = 6)
+#fig.colorbar(pc,ax=ax)
+
+kinem_map = DYN_COMP_LOSVD_MAP(Lambda_z_bounds ,0)
+
+pc = axs[1,1].imshow(kinem_map,cmap = cmap,transform = tr + axs[1,1].transData,origin='lower',vmin = Vel_min, vmax = Vel_max)
+
+axs[1, 1].yaxis.set_major_locator(tcr.NullLocator())
+axs[1, 1].xaxis.set_major_locator(tcr.NullLocator())
+
+axs[1, 1].yaxis.set_major_formatter(tcr.NullFormatter())
+axs[1, 1].xaxis.set_major_formatter(tcr.NullFormatter())
+
+#axs[1,1].yaxis.set_major_formatter(tcr.FuncFormatter(tickers_Y_formatter))
+#axs[1,1].xaxis.set_major_formatter(tcr.FuncFormatter(tickers_X_formatter))
+axs[1,1].yaxis.set_major_locator(tcr.IndexLocator(12,offset = -3.5))
+axs[1,1].xaxis.set_major_locator(tcr.IndexLocator(12,offset = -3.5))
+
+axs[1,1].yaxis.set_minor_formatter(tcr.NullFormatter())
+axs[1,1].xaxis.set_minor_formatter(tcr.NullFormatter())
+axs[1,1].yaxis.set_minor_locator(tcr.IndexLocator(2,offset = 0.5))
+axs[1,1].xaxis.set_minor_locator(tcr.IndexLocator(2,offset = 0.5))
+
+axs[1,1].tick_params(direction = "in",which = "both",labelsize = 6)
+
+
+
+kinem_map = kinem_map - spectr['STELLAR_VEL'].data
+
+pc = axs[1,2].imshow(kinem_map,cmap = cmap,transform = tr + axs[1,2].transData,origin='lower',vmin = Vel_min, vmax = Vel_max)
+
+divider = make_axes_locatable(axs[1,2])
+ax_cb = divider.append_axes("right", size="5%", pad=-0.06)
+
+fig.colorbar(pc, ax=axs[1, 2],cax = ax_cb,orientation = 'vertical',location = 'right',ticks = [Vel_min,Vel_max],format = tcr.NullFormatter())
+
+axs[1,2].yaxis.set_label_position("right")
+axs[1,2].set_ylabel(f'{Vel_min}                 {Vel_max} ',loc = 'top',labelpad = 1)
+
+
+
+axs[1, 2].yaxis.set_major_locator(tcr.NullLocator())
+axs[1, 2].xaxis.set_major_locator(tcr.NullLocator())
+
+axs[1, 2].yaxis.set_major_formatter(tcr.NullFormatter())
+axs[1, 2].xaxis.set_major_formatter(tcr.NullFormatter())
+
+#axs[1,2].yaxis.set_major_formatter(tcr.FuncFormatter(tickers_Y_formatter))
+#axs[1,2].xaxis.set_major_formatter(tcr.FuncFormatter(tickers_X_formatter))
+axs[1,2].yaxis.set_major_locator(tcr.IndexLocator(12,offset = -3.5))
+axs[1,2].xaxis.set_major_locator(tcr.IndexLocator(12,offset = -3.5))
+
+axs[1,2].yaxis.set_minor_formatter(tcr.NullFormatter())
+axs[1,2].xaxis.set_minor_formatter(tcr.NullFormatter())
+axs[1,2].yaxis.set_minor_locator(tcr.IndexLocator(2,offset = 0.5))
+axs[1,2].xaxis.set_minor_locator(tcr.IndexLocator(2,offset = 0.5))
+
+axs[1,2].tick_params(direction = "in",which = "both",labelsize = 6)
+
+
+
+### Phot obs vs Phot model ###
+
+
+phot_obs = np.loadtxt('converted_fits_PGC_35706_z.txt')
+phot_model = np.loadtxt('model_PGC_35706_z.txt')
+phot_res = np.abs(phot_obs - phot_model)
+#phot_res = phot_obs - phot_model
+
+Phot_max = np.max([np.max(phot_obs),np.max(phot_model),np.max(phot_res)])
+Phot_min = np.min([np.min(phot_obs),np.min(phot_model),np.min(phot_res)])
+
+pc = axs[0,0].imshow(phot_obs,cmap = cmap_2,transform = tr + axs[0,0].transData,origin='lower',vmin = Phot_min, vmax = Phot_max)
+print(phot_obs.shape)
+axs[0, 0].yaxis.set_major_locator(tcr.NullLocator())
+axs[0, 0].xaxis.set_major_locator(tcr.NullLocator())
+
+#axs[0, 0].yaxis.set_major_formatter(tcr.NullFormatter())
+axs[0, 0].xaxis.set_major_formatter(tcr.NullFormatter())
+
+axs[0,0].yaxis.set_major_formatter(tcr.FuncFormatter(tickers_Y_formatter_2))
+#axs[0,0].xaxis.set_major_formatter(tcr.FuncFormatter(tickers_X_formatter))
+axs[0,0].yaxis.set_major_locator(tcr.IndexLocator(5,offset = 2.5))
+axs[0,0].xaxis.set_major_locator(tcr.IndexLocator(5,offset = 2.5))
+
+axs[0,0].yaxis.set_minor_formatter(tcr.NullFormatter())
+axs[0,0].xaxis.set_minor_formatter(tcr.NullFormatter())
+axs[0,0].yaxis.set_minor_locator(tcr.IndexLocator(1,offset = 0.5))
+axs[0,0].xaxis.set_minor_locator(tcr.IndexLocator(1,offset = 0.5))
+
+axs[0,0].tick_params(direction = "in",which = "both",labelsize = 6)
+
+axs[0,0].annotate(r"$Log_{10}(Flux)[counts/pixel]$",(1,23),fontsize=5,style = "italic")
+
+axs[0,0].set_title("obs ")
+
+
+
+pc = axs[0,1].imshow(phot_model,cmap = cmap_2,transform = tr + axs[0,1].transData,origin='lower',vmin = Phot_min, vmax = Phot_max)
+
+axs[0, 1].yaxis.set_major_locator(tcr.NullLocator())
+axs[0, 1].xaxis.set_major_locator(tcr.NullLocator())
+
+axs[0, 1].yaxis.set_major_formatter(tcr.NullFormatter())
+axs[0, 1].xaxis.set_major_formatter(tcr.NullFormatter())
+
+#axs[0,1].yaxis.set_major_formatter(tcr.FuncFormatter(tickers_Y_formatter))
+#axs[0,1].xaxis.set_major_formatter(tcr.FuncFormatter(tickers_X_formatter))
+axs[0,1].yaxis.set_major_locator(tcr.IndexLocator(5,offset = 2.5))
+axs[0,1].xaxis.set_major_locator(tcr.IndexLocator(5,offset = 2.5))
+
+axs[0,1].yaxis.set_minor_formatter(tcr.NullFormatter())
+axs[0,1].xaxis.set_minor_formatter(tcr.NullFormatter())
+axs[0,1].yaxis.set_minor_locator(tcr.IndexLocator(1,offset = 0.5))
+axs[0,1].xaxis.set_minor_locator(tcr.IndexLocator(1,offset = 0.5))
+
+axs[0,1].tick_params(direction = "in",which = "both",labelsize = 6)
+
+axs[0,1].set_title("model ")
+
+
+
+pc = axs[0,2].imshow(phot_res,cmap = cmap_2,transform = tr + axs[0,2].transData,origin='lower',vmin = Phot_min, vmax = Phot_max)
+
+divider = make_axes_locatable(axs[0,2])
+ax_cb = divider.append_axes("right", size="5%", pad=-0.06)
+
+fig.colorbar(pc, ax=axs[0, 2],cax = ax_cb,orientation = 'vertical',location = 'right',ticks = [Phot_min,Phot_max],format = tcr.NullFormatter())
+
+axs[0,2].yaxis.set_label_position("right")
+axs[0,2].set_ylabel(f'{round(Phot_min)}                  {round(Phot_max)} ',loc = 'top',labelpad = 1)
+
+axs[0, 2].yaxis.set_major_locator(tcr.NullLocator())
+axs[0, 2].xaxis.set_major_locator(tcr.NullLocator())
+
+axs[0, 2].yaxis.set_major_formatter(tcr.NullFormatter())
+axs[0, 2].xaxis.set_major_formatter(tcr.NullFormatter())
+
+#axs[0,2].yaxis.set_major_formatter(tcr.FuncFormatter(tickers_Y_formatter))
+#axs[0,2].xaxis.set_major_formatter(tcr.FuncFormatter(tickers_X_formatter))
+axs[0,2].yaxis.set_major_locator(tcr.IndexLocator(5,offset = 2.5))
+axs[0,2].xaxis.set_major_locator(tcr.IndexLocator(5,offset = 2.5))
+
+axs[0,2].yaxis.set_minor_formatter(tcr.NullFormatter())
+axs[0,2].xaxis.set_minor_formatter(tcr.NullFormatter())
+axs[0,2].yaxis.set_minor_locator(tcr.IndexLocator(1,offset = 0.5))
+axs[0,2].xaxis.set_minor_locator(tcr.IndexLocator(1,offset = 0.5))
+
+axs[0,2].tick_params(direction = "in",which = "both",labelsize = 6)
+
+axs[0, 2].set_title("|obs - model|")
+
+
+
+### Sigma obs vs Sigma model ###
+
+
+
+Sig_map_obs = spectr['STELLAR_SIGMA'].data
+Sig_map_obs[(Sig_map_obs == 0)] = None
+
+pc = axs[2,0].imshow(Sig_map_obs,cmap = cmap,transform = tr + axs[2,0].transData,origin='lower',vmin = Sig_min, vmax = Sig_max)
+
+axs[2,0].yaxis.set_major_locator(tcr.NullLocator())
+axs[2,0].xaxis.set_major_locator(tcr.NullLocator())
+
+#axs[2,0].yaxis.set_major_formatter(tcr.NullFormatter())
+#axs[2,0].xaxis.set_major_formatter(tcr.NullFormatter())
+
+axs[2,0].yaxis.set_major_formatter(tcr.FuncFormatter(tickers_Y_formatter))
+axs[2,0].xaxis.set_major_formatter(tcr.FuncFormatter(tickers_X_formatter))
+axs[2,0].yaxis.set_major_locator(tcr.IndexLocator(12,offset = -3.5))
+axs[2,0].xaxis.set_major_locator(tcr.IndexLocator(12,offset = -3.5))
+
+axs[2,0].yaxis.set_minor_formatter(tcr.NullFormatter())
+axs[2,0].xaxis.set_minor_formatter(tcr.NullFormatter())
+axs[2,0].yaxis.set_minor_locator(tcr.IndexLocator(2,offset = 0.5))
+axs[2,0].xaxis.set_minor_locator(tcr.IndexLocator(2,offset = 0.5))
+
+axs[2,0].tick_params(direction = "in",which = "both",labelsize = 6)
+
+axs[2,0].annotate(r"$\sigma_{0}[km/s]$",(2,37),fontsize=7,style = "italic")
+
+
+
+kinem_map = DYN_COMP_LOSVD_MAP(Lambda_z_bounds ,1)
+
+
+pc = axs[2,1].imshow(kinem_map,cmap = cmap,transform = tr + axs[2,1].transData,origin='lower',vmin = Sig_min, vmax = Sig_max)
+
+axs[2,1].yaxis.set_major_locator(tcr.NullLocator())
+axs[2,1].xaxis.set_major_locator(tcr.NullLocator())
+
+axs[2,1].yaxis.set_major_formatter(tcr.NullFormatter())
+#axs[2,1].xaxis.set_major_formatter(tcr.NullFormatter())
+
+#axs[2,1].yaxis.set_major_formatter(tcr.FuncFormatter(tickers_Y_formatter))
+axs[2,1].xaxis.set_major_formatter(tcr.FuncFormatter(tickers_X_formatter))
+axs[2,1].yaxis.set_major_locator(tcr.IndexLocator(12,offset = -3.5))
+axs[2,1].xaxis.set_major_locator(tcr.IndexLocator(12,offset = -3.5))
+
+axs[2,1].yaxis.set_minor_formatter(tcr.NullFormatter())
+axs[2,1].xaxis.set_minor_formatter(tcr.NullFormatter())
+axs[2,1].yaxis.set_minor_locator(tcr.IndexLocator(2,offset = 0.5))
+axs[2,1].xaxis.set_minor_locator(tcr.IndexLocator(2,offset = 0.5))
+
+axs[2,1].tick_params(direction = "in",which = "both",labelsize = 6)
+
+axs[2,1].set_xlabel("arcsec")
+
+
+kinem_map = abs(kinem_map - spectr['STELLAR_SIGMA'].data)
+
+
+pc = axs[2,2].imshow(kinem_map,cmap = cmap,transform = tr + axs[2,2].transData,origin='lower',vmin = Sig_min, vmax = Sig_max)
+
+divider = make_axes_locatable(axs[2,2])
+ax_cb = divider.append_axes("right", size="5%", pad=-0.06)
+
+fig.colorbar(pc, ax=axs[2, 2],cax = ax_cb,orientation = 'vertical',location = 'right',ticks = [Sig_min,Sig_max],format = tcr.NullFormatter())
+
+axs[2,2].yaxis.set_label_position("right")
+axs[2,2].set_ylabel(f'{round(Sig_min)}                  {round(Sig_max)} ',loc = 'top',labelpad = 1)
+
+axs[2,2].yaxis.set_major_locator(tcr.NullLocator())
+axs[2,2].xaxis.set_major_locator(tcr.NullLocator())
+
+axs[2,2].yaxis.set_major_formatter(tcr.NullFormatter())
+#axs[2,2].xaxis.set_major_formatter(tcr.NullFormatter())
+
+#axs[2,2].yaxis.set_major_formatter(tcr.FuncFormatter(tickers_Y_formatter))
+axs[2,2].xaxis.set_major_formatter(tcr.FuncFormatter(tickers_X_formatter))
+axs[2,2].yaxis.set_major_locator(tcr.IndexLocator(12,offset = -3.5))
+axs[2,2].xaxis.set_major_locator(tcr.IndexLocator(12,offset = -3.5))
+
+axs[2,2].yaxis.set_minor_formatter(tcr.NullFormatter())
+axs[2,2].xaxis.set_minor_formatter(tcr.NullFormatter())
+axs[2,2].yaxis.set_minor_locator(tcr.IndexLocator(2,offset = 0.5))
+axs[2,2].xaxis.set_minor_locator(tcr.IndexLocator(2,offset = 0.5))
+
+axs[2,2].tick_params(direction = "in",which = "both",labelsize = 6)
+
+fig.savefig("kinem_map.pdf",format = "pdf")
+
+
 
 
 orbits=[]
@@ -110,12 +441,13 @@ M_p_r=0
 N = len(circ2)
 
 for i in range(0,N):
-    if weights[0][i]>=0.00001:
-        orbits.append([circ2[i],weights[0][i] * M_total*15/1e8,Rmean[i] * R_scale,cosincl[i], Lambda_z[i], Vel[i]])
+    if weights[i]>=0.00001:
+        orbits.append([circ2[i],weights[i] * M_total*7/1e8,Rmean[i] * R_scale,cosincl[i], Lambda_z[i], Vel[i]])
 
 steps = 21
 rad = np.linspace(0,Max_rad,steps)
 zone = Max_rad/steps/2
+
 for r in rad:
     for i in range(0,len(orbits)):
         if orbits[i][4] > 0.5 and orbits[i][2] > (r-zone) and orbits[i][2] < (r+zone):
@@ -137,16 +469,6 @@ for r in rad:
     M_s = 0
     M_p_r = 0
 
-matrix=[[],[],[],[],[],[],[]]
-
-for i in range(0,len(orbits)):
-        matrix[0].append(orbits[i][0])
-        matrix[1].append(orbits[i][1])
-        matrix[2].append(orbits[i][2])
-        matrix[3].append(orbits[i][3])
-        matrix[4].append(orbits[i][4])
-        matrix[5].append(orbits[i][5])
-
 fig, ax = plt.subplots()
 
 ax.plot(rad,mass_c_p,label="mass of co-rotating component",marker='o', markersize = 4, linestyle="--",c = "blue")
@@ -157,17 +479,12 @@ ax.plot(rad,mass_sigma,label="mass of all stars",marker='o', markersize = 4 ,lin
 
 ax.plot(rad,mass_polar_ring,label="mass of polar rings",marker='o', markersize = 4 ,linestyle="--",c = "grey")
 
-#ax.legend()
 ax.set_xlabel(r"$R_{mean},arcsec$")
 ax.set_ylabel(r"Mass,$10^9$ $M_{\odot}$")
-ax.set_title(r"$M_{Total}=6.75 \cdot 10^{10}$ $M_{\odot}$" )
-#ax.set_ylim(0, 10)
-#ax.set_yscale('log')
-#ax.yaxis.set_major_locator(tcr.LogLocator(base = 10, numticks = 200))
-ax.tick_params(direction = "in",which = "both")
-#ax.xaxis.set_minor_formatter(tcr.NullFormatter())
-#ax.xaxis.set_minor_locator(tcr.IndexLocator(0.5,offset = 0))
-fig.savefig("mass_dest",format = "eps")
+ax.set_title(r"$M_{Total}=9 \cdot 10^{9}$ $M_{\odot}$" )
+ax.tick_params(direction = "in",which = "both",labelsize = 6)
+
+fig.savefig("mass_dest.pdf",format = "pdf")
 
 
 def orb_weights_dist(X,Y,orbits_index_1,orbits_index_2,steps,X_label,Y_label,Plot_title,plot_Name): 
@@ -198,7 +515,7 @@ def orb_weights_dist(X,Y,orbits_index_1,orbits_index_2,steps,X_label,Y_label,Plo
     ax.set_xlabel(X_label)
     ax.set_ylabel(Y_label)
     fig.colorbar(pc,ax=ax,label=r'$Mass, 10^8$ $M_{\odot}$')
-    fig.savefig(plot_Name,format = "eps")
+    fig.savefig(plot_Name + ".pdf",format = "pdf")
 
 steps = 21
 
@@ -214,57 +531,3 @@ orb_weights_dist(rad,norm_L,2,0,steps,"R_mean,kpc","norm_L","","Rad_vs_norm_L")
 plt_Lambda_z = np.linspace(-1,1,steps)
 
 orb_weights_dist(rad,plt_Lambda_z,2,4,steps,r"$R_{mean},arcsec$",r"$circularity,\lambda_{z}$","","Rad_vs_Lambda_z")
-
-print(np.mean(Rmean),np.max(Rmean))
-"""
-matrix_disk = [[],[],[],[],[],[],[]]
-
-for i in range(0,len(orbits)):
-    if orbits[i][4] > 0.7:
-        matrix_disk[0].append(orbits[i][0])
-        matrix_disk[1].append(orbits[i][1])
-        matrix_disk[2].append(orbits[i][2])
-        matrix_disk[3].append(orbits[i][3])
-        matrix_disk[4].append(orbits[i][4])
-        matrix_disk[5].append(orbits[i][5])
-        matrix_disk[6].append(orbits[i][6])
-        
-fig, ax = plt.subplots()
-ax.scatter(matrix_disk[2],matrix_disk[6],20,c = "red")
-ax.set_xlabel("R_mean,kpc")
-ax.set_ylabel("Vel,km/s")
-fig.savefig("Vel_vs_Rad")
-
-fig, axs = plt.subplots(2, 2, layout='constrained')
-pc = axs[0, 0].scatter(matrix[1], matrix[2], c=matrix[3], s=0.01 ,cmap='inferno',alpha = 1)
-fig.colorbar(pc, ax=axs[0, 0], extend='both',label='cos(incl)')
-#axs[0, 0].set_title('c=cos(incl)')
-axs[0, 0].set_xlabel('weights,M_sun')
-axs[0, 0].set_ylabel('R_mean,kpc')
-
-pc = axs[1, 0].scatter(matrix[1], matrix[2], c=matrix[0], s=10 ,cmap='inferno',alpha = 0.2)
-fig.colorbar(pc, ax=axs[1, 0], extend='both',label='circ2')
-#axs[1, 0].set_title('c=circ2')
-axs[1, 0].set_xlabel('weights,M_sun')
-axs[1, 0].set_ylabel('R_mean,kpc')
-
-pc = axs[0, 1].scatter(matrix[2], matrix[3], c=matrix[1], s=10 ,cmap='inferno',alpha = 0.2)
-fig.colorbar(pc, ax=axs[0, 1], extend='both',label='weights,M_sun')
-#axs[0, 1].set_title('c=weights,M_sun')
-axs[0, 1].set_xlabel('R_mean,kpc')
-axs[0, 1].set_ylabel('cos(incl)')
-
-pc = axs[1, 1].scatter(matrix[1], matrix[0], c=matrix[3], s=10 ,cmap='inferno',alpha = 0.2)
-fig.colorbar(pc, ax=axs[1, 1], extend='both',label='cos(incl)')
-#axs[1, 1].set_title('c=cos(incl)')
-axs[1, 1].set_xlabel('weights,M_sun')
-axs[1, 1].set_ylabel('circ2')
-
-fig.savefig("plots")
-
-#data = _numpy.transpose(_numpy.array([circ2,weights[5],Rmean,cosincl]))
-print(Units)
-"""
-"""
-np.savetxt("/home/denis/Documents/agama/Gal/data.txt",sorted(orbits, key = lambda orbits: orbits[1]), fmt="%8.3f", header="circ2 weights Rmean Lz/l")
-"""

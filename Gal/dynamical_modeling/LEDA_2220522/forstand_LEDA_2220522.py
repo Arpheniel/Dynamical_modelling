@@ -147,13 +147,13 @@ agama.setUnits(mass=1, length=arcsec2kpc, velocity=1)  # [OPT] units: mass = 1 M
 Mbh       = float(args.get('MBH', 1e7))         # [REQ] mass of the central black hole  [Msun]
 Omega     = float(args.get('OMEGA', 0))         # [REQ] pattern speed (relevant only for non-axisymmetric models) [km/s/length_unit]
 halotype  =       args.get('HALOTYPE', 'nfw')   # [OPT] halo type: 'LOG' or 'NFW'
-vhalo     = float(args.get('VHALO', 190))       # [OPT] asymptotic (LOG) or peak (NFW) circular velocity of the halo [km/s]
-rhalo     = float(args.get('RHALO', 100))       # [OPT] core (LOG) or scale (NFW) radius of the halo [lenth_unit]
+vhalo     = float(args.get('VHALO', 250))       # [OPT] asymptotic (LOG) or peak (NFW) circular velocity of the halo [km/s]
+rhalo     = float(args.get('RHALO', 170))       # [OPT] core (LOG) or scale (NFW) radius of the halo [lenth_unit]
 Upsilon   = float(args.get('UPSILON', 5))     # [OPT] initial value of mass-to-light ratio in the search
-multstep  = float(args.get('MULTSTEP', 1.05))   # [OPT] multiplicative step for increasing/decreasing Upsilon during grid search
-numOrbits = int  (args.get('NUMORBITS', 5000)) # [OPT] number of orbit in the model (size of orbit library)
+multstep  = float(args.get('MULTSTEP', 1.1))   # [OPT] multiplicative step for increasing/decreasing Upsilon during grid search
+numOrbits = int  (args.get('NUMORBITS', 6000)) # [OPT] number of orbit in the model (size of orbit library)
 intTime   = float(args.get('INTTIME', 100.0))   # [OPT] integration time in units of orbital period
-regul     = float(args.get('REGUL', 1. ))       # [OPT] regularization parameter (larger => more uniform orbit weight distribution in models)
+regul     = float(args.get('REGUL', 0. ))       # [OPT] regularization parameter (larger => more uniform orbit weight distribution in models)
 incl      = float(args.get('INCL', 27.0))       # [REQ] inclination angle (0 is face-on, 90 is edge-on) [degrees]
 beta      = incl * numpy.pi/180                 # same in radians
 alpha_deg = float(args.get('ALPHA', 0))       # [REQ] azimuthal angle of viewing direction in the model coordinates (relevant only for non-axisym)

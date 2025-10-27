@@ -142,18 +142,18 @@ for arg in sys.argv[1:]:
     arglist.append([nameval[0].upper(), nameval[1]])
 args = dict(arglist)
 
-distance  = float(args.get('DISTANCE', 117490))# [REQ] assumed distance [kpc]
+distance  = float(args.get('DISTANCE', 108643))# [REQ] assumed distance [kpc]
 arcsec2kpc= distance * numpy.pi / 648000        # conversion factor (number of kiloparsecs in one arcsecond)
 agama.setUnits(mass=1, length=arcsec2kpc, velocity=1)  # [OPT] units: mass = 1 Msun, length = 1", velocity = 1 km/s
 Mbh       = float(args.get('MBH', 1e7))         # [REQ] mass of the central black hole  [Msun]
 Omega     = float(args.get('OMEGA', 0))         # [REQ] pattern speed (relevant only for non-axisymmetric models) [km/s/length_unit]
 halotype  =       args.get('HALOTYPE', 'nfw')   # [OPT] halo type: 'LOG' or 'NFW'
-Upsilon   = float(args.get('UPSILON', 15.0))     # [OPT] initial value of mass-to-light ratio in the search
+Upsilon   = float(args.get('UPSILON', 7.0))     # [OPT] initial value of mass-to-light ratio in the search
 multstep  = float(args.get('MULTSTEP', 1.1))   # [OPT] multiplicative step for increasing/decreasing Upsilon during grid search
 numOrbits = int  (args.get('NUMORBITS', 10000)) # [OPT] number of orbit in the model (size of orbit library)
 intTime   = float(args.get('INTTIME', 100.0))   # [OPT] integration time in units of orbital period
 regul     = float(args.get('REGUL', 0. ))       # [OPT] regularization parameter (larger => more uniform orbit weight distribution in models)
-incl      = float(args.get('INCL', 42.0))       # [REQ] inclination angle (0 is face-on, 90 is edge-on) [degrees]
+incl      = float(args.get('INCL', 27.0))       # [REQ] inclination angle (0 is face-on, 90 is edge-on) [degrees]
 beta      = incl * numpy.pi/180                 # same in radians
 alpha_deg = float(args.get('ALPHA', 0))       # [REQ] azimuthal angle of viewing direction in the model coordinates (relevant only for non-axisym)
 alpha     = alpha_deg * numpy.pi/180            # same in radians
@@ -173,7 +173,7 @@ numpy.set_printoptions(precision=4, linewidth=9999, suppress=True)
 # In this example, we use the Multi-Gaussian Expansion to parametrize
 # the surface density profile and deproject it into the 3d density profile,
 # but the code works with any other choice of 3d density model.
-filenameMGE = 'mge_PGC35706_z_legacy.txt'    # [REQ] file with parameters of the MGE model for the surface density profile (if MGE is used)
+filenameMGE = 'mge_LEDA_2220522_z_legacy.txt'    # [REQ] file with parameters of the MGE model for the surface density profile (if MGE is used)
 
 ### common parameters for kinematic datasets (though in principle they may also differ between them)
 gridv  = numpy.linspace(-250, 250, 46)  # [REQ] the grid in model velocity space (will be multiplied by sqrt(Upsilon) when comparing to data)
@@ -185,7 +185,7 @@ hist_degree = 0               # [OPT] B-spline degree for the observed LOSVDs (0
 hist_gridv  = numpy.linspace(-400, 400, 17)  # [OPT] velocity grid for the observed LOSVDs (boundaries of velocity bins, not centers!)
 
 ### parameters of the 1st kinematic dataset
-gamma1 = 0.0 * numpy.pi/180  # [REQ] CW rotation angle of the image-plane X axis relative to the line of nodes (=major axis for axisym.systems)
+gamma1 = 40.0 * numpy.pi/180  # [REQ] CW rotation angle of the image-plane X axis relative to the line of nodes (=major axis for axisym.systems)
 psf1   = 1.0                  # [REQ] width of the Gaussian PSF ( may use more than one component: [ [width1, weight1], [width2, weight2] ] )
 kinemParams1 = dict(          # parameters passed to the constructor of the Target class
     type     = 'LOSVD',
@@ -198,9 +198,9 @@ kinemParams1 = dict(          # parameters passed to the constructor of the Targ
     degree   = degree,        # parameters for the internal datacube represented by B-splines:
     gridv    = gridv,         # usually will be identical for all datasets (except gridx,gridy which is determined by apertures)
 )
-filenameVorBin1 = 'bins_PGC35706.txt' # [REQ] Voronoi binning scheme for this dataset
+filenameVorBin1 = 'bins_LEDA2220522.txt' # [REQ] Voronoi binning scheme for this dataset
 filenameHist1   = 'kinem_hist_i%.0f_lr.txt'   % incl # [REQ] histogrammed representation of observed LOSVDs
-filenameGH1     = 'kinem_gh_PGC35706.txt'# [REQ] Gauss-Hermite parametrization of observed LOSVDs (usually only one of these two
+filenameGH1     = 'kinem_gh_LEDA2220522.txt'# [REQ] Gauss-Hermite parametrization of observed LOSVDs (usually only one of these two
 """
 ### same for the 2nd kinematic dataset [OPT] - may have only one dataset, or as many as needed
 gamma2 = 115.0 * numpy.pi/180
@@ -260,7 +260,7 @@ def lnprob_fun(pars0):
         'DensityClassicLinear',
         'DensitySphHarm',
         'DensityCylindricalTopHat',
-        'DensityCylindricalLinear')[2])   # [REQ] choose one of these types!
+        'DensityCylindricalLinear')[4])   # [REQ] choose one of these types!
 # use the discrete samples from the density profile to choose the grid parameters
     samples = densityStars.sample(10000)[0]
     if densityParams['type'] == 'DensityClassicTopHat' or densityParams['type'] == 'DensityClassicLinear':
@@ -433,7 +433,7 @@ from adamet.adamet import adamet
 
 def bestfit_adamet():
 
-    RHalo,VHalo=150,180
+    RHalo,VHalo=150,250
     nstep=100
     pars0 = numpy.array([RHalo,VHalo])    # Starting guess
     #fargs = (RHalo,VHalo)   # Parameters to pass to the lnprob function

@@ -151,6 +151,7 @@ def orbit_map(orb_groups,incl):
 
 fig, axs = plt.subplots(4, 4, sharex = False, sharey = False)
 
+#fig.subplots_adjust(left=-0.1, bottom=0.05, right=0.8, top=1, wspace=0, hspace=0)
 fontdict = {'fontsize': 6}
 
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -165,7 +166,8 @@ def tickers_Y_formatter(y, pos):
     #print(y,pos)
     return f'{int((y - scale/2)/2)}' #Y is inverted
 
-
+#axs.ylabel("arcsec")
+#axs.xlabel("arcsec")
 
 #(14,21)
 #(0,9)
@@ -546,4 +548,4 @@ axs[3, 3].xaxis.set_minor_locator(tcr.IndexLocator(2,offset = 0.5))
 axs[3, 3].tick_params(direction = "in",which = "major",width = 0.3,length = 2,labelsize =4)
 axs[3, 3].tick_params(direction = "in",which = "minor",width = 0.15,length = 1)
 
-fig.savefig("plots",format = "eps")
+fig.savefig("plots.pdf",format = "pdf")
