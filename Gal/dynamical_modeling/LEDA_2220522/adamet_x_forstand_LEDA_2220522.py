@@ -198,9 +198,9 @@ kinemParams1 = dict(          # parameters passed to the constructor of the Targ
     degree   = degree,        # parameters for the internal datacube represented by B-splines:
     gridv    = gridv,         # usually will be identical for all datasets (except gridx,gridy which is determined by apertures)
 )
-filenameVorBin1 = 'bins_LEDA2220522.txt' # [REQ] Voronoi binning scheme for this dataset
+filenameVorBin1 = 'bins_LEDA_2220522_Damirs.txt' # [REQ] Voronoi binning scheme for this dataset
 filenameHist1   = 'kinem_hist_i%.0f_lr.txt'   % incl # [REQ] histogrammed representation of observed LOSVDs
-filenameGH1     = 'kinem_gh_LEDA2220522.txt'# [REQ] Gauss-Hermite parametrization of observed LOSVDs (usually only one of these two
+filenameGH1     = 'kinem_gh_LEDA_2220522_Damirs.txt'# [REQ] Gauss-Hermite parametrization of observed LOSVDs (usually only one of these two
 """
 ### same for the 2nd kinematic dataset [OPT] - may have only one dataset, or as many as needed
 gamma2 = 115.0 * numpy.pi/180
