@@ -434,7 +434,7 @@ from adamet.adamet import adamet
 def bestfit_adamet():
 
     RHalo,VHalo=150,250
-    nstep=100
+    nstep=40
     pars0 = numpy.array([RHalo,VHalo])    # Starting guess
     #fargs = (RHalo,VHalo)   # Parameters to pass to the lnprob function
     sigpar = [20, 20]     # Order of magnitude of the uncertainties
@@ -445,8 +445,15 @@ def bestfit_adamet():
     bestfit = pars[numpy.argmax(lnprob)]
     perc = numpy.percentile(pars, [15.86, 84.14], axis=0)
     sig_bestfit = numpy.squeeze(numpy.diff(perc, axis=0)/2)   # half of 68% interval
-    print(f"RHalo = {bestfit[0]:0.2f} +/- {sig_bestfit[0]:0.2f}")
+    print(f"RHalo = {bestfit[0]:0.2f} +/- {sig_bestfit[0]:0.2f}")besfit = bestfit_adamet()
     print(f"VHalo = {bestfit[1]:0.2f} +/- {sig_bestfit[1]:0.2f}")
     print(pars)
-    
-bestfit_adamet()
+
+    return besfit, sig_bestfit
+besfit,sig_bestfit = bestfit_adamet()
+
+numOrbits = 40000
+save_orb = True
+save_orbits_to = "" #[REQ].../Chemo-dynamical_modeling/LEDA_2220522
+
+lnprob_fun(bestfit)

@@ -150,7 +150,7 @@ Omega     = float(args.get('OMEGA', 0))         # [REQ] pattern speed (relevant 
 halotype  =       args.get('HALOTYPE', 'nfw')   # [OPT] halo type: 'LOG' or 'NFW'
 Upsilon   = float(args.get('UPSILON', 15.0))     # [OPT] initial value of mass-to-light ratio in the search
 multstep  = float(args.get('MULTSTEP', 1.1))   # [OPT] multiplicative step for increasing/decreasing Upsilon during grid search
-numOrbits = int  (args.get('NUMORBITS', 10000)) # [OPT] number of orbit in the model (size of orbit library)
+numOrbits = int  (args.get('NUMORBITS', 9000)) # [OPT] number of orbit in the model (size of orbit library)
 intTime   = float(args.get('INTTIME', 100.0))   # [OPT] integration time in units of orbital period
 regul     = float(args.get('REGUL', 0. ))       # [OPT] regularization parameter (larger => more uniform orbit weight distribution in models)
 incl      = float(args.get('INCL', 42.0))       # [REQ] inclination angle (0 is face-on, 90 is edge-on) [degrees]
@@ -165,6 +165,8 @@ nbody     = int  (args.get('NBODY', 100000))    # [OPT] number of particles for 
 nbodyFormat = args.get('NBODYFORMAT', 'text')   # [OPT] format for storing N-body snapshots (text/nemo/gadget)
 command   = args.get('DO', '').upper()          # [REQ] operation mode: 'RUN' - run a model, 'PLOT' - show the model grid and maps, 'TEST' - show diagnostic plots, 'MOCK' - create mock maps
 usehist   = args.get('HIST', 'n')[0] in 'yYtT1' # [OPT] whether to use LOSVD histograms as input (default 'no' is to use GH moments)
+save_orb = False
+save_orbits_to = ""
 variant   = 'Hist' if usehist else 'GH'         # suffix for disinguishing runs using histogramed LOSVDs or GH moments
 fileResult= 'results%s.txt' % variant           # [OPT] filename for collecting summary results for the entire model grid
 numpy.random.seed(32)                           # [OPT] make things repeatable when generating mock data (*not* related to the seed for the orbit library)
@@ -423,7 +425,7 @@ def lnprob_fun(pars0):
             # [OPT] results/summary file
             fileResult = fileResult,
             # [OPT] parameters for the N-body snapshot representing the best-fit model
-            nbody = nbody, nbodyFormat = nbodyFormat )
+            nbody = nbody, nbodyFormat = nbodyFormat, save_orbits = save_orb, save_orbits_to = save_orbits_to)
             
     else:
         exit('Nothing to do!')
@@ -434,7 +436,7 @@ from adamet.adamet import adamet
 def bestfit_adamet():
 
     RHalo,VHalo=150,180
-    nstep=100
+    nstep=40
     pars0 = numpy.array([RHalo,VHalo])    # Starting guess
     #fargs = (RHalo,VHalo)   # Parameters to pass to the lnprob function
     sigpar = [20, 20]     # Order of magnitude of the uncertainties
@@ -449,4 +451,11 @@ def bestfit_adamet():
     print(f"VHalo = {bestfit[1]:0.2f} +/- {sig_bestfit[1]:0.2f}")
     print(pars)
     
-bestfit_adamet()
+    return besfit
+besfit = bestfit_adamet()
+
+numOrbits = 40000
+save_orb = True
+save_orbits_to = "" #[REQ].../Chemo-dynamical_modeling/PGC_35706
+
+lnprob_fun(bestfit)
