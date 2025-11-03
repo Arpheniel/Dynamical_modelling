@@ -451,9 +451,9 @@ def bestfit_adamet():
     print(f"VHalo = {bestfit[1]:0.2f} +/- {sig_bestfit[1]:0.2f}")
     print(pars)
     
-    return besfit
-besfit = bestfit_adamet()
-
+    return bestfit,sig_bestfit
+bestfit,sig_bestfit = bestfit_adamet()
+numpy.savetxt("bestfit.txt",[bestfit,sig_bestfit])
 numOrbits = 40000
 save_orb = True
 save_orbits_to = "" #[REQ].../Chemo-dynamical_modeling/PGC_35706
