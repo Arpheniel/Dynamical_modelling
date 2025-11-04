@@ -445,7 +445,7 @@ def bestfit_adamet():
     bestfit = pars[numpy.argmax(lnprob)]
     perc = numpy.percentile(pars, [15.86, 84.14], axis=0)
     sig_bestfit = numpy.squeeze(numpy.diff(perc, axis=0)/2)   # half of 68% interval
-    print(f"RHalo = {bestfit[0]:0.2f} +/- {sig_bestfit[0]:0.2f}")besfit = bestfit_adamet()
+    print(f"RHalo = {bestfit[0]:0.2f} +/- {sig_bestfit[0]:0.2f}")
     print(f"VHalo = {bestfit[1]:0.2f} +/- {sig_bestfit[1]:0.2f}")
     print(pars)
 
@@ -454,6 +454,6 @@ bestfit,sig_bestfit = bestfit_adamet()
 numpy.savetxt("bestfit.txt",[bestfit,sig_bestfit])
 numOrbits = 40000
 save_orb = True
-save_orbits_to = "" #[REQ].../Chemo-dynamical_modeling/LEDA_2220522
+save_orbits_to = "/data1/vgorad/dynam_mod/Dynamical_modelling/Gal/chemo-dynamical_modeling/LEDA_2220522" #[REQ].../Chemo-dynamical_modeling/LEDA_2220522
 
 lnprob_fun(bestfit)
