@@ -456,6 +456,6 @@ bestfit,sig_bestfit = bestfit_adamet()
 numpy.savetxt("bestfit.txt",[bestfit,sig_bestfit])
 numOrbits = 40000
 save_orb = True
-save_orbits_to = "" #[REQ].../Chemo-dynamical_modeling/PGC_35706
+save_orbits_to = "/data1/vgorad/dynam_mod/Dynamical_modelling/Gal/chemo-dynamical_modeling/PGC_35706" #[REQ].../Chemo-dynamical_modeling/PGC_35706
 
 lnprob_fun(bestfit)
