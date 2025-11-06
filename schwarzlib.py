@@ -5,7 +5,7 @@ each particular galaxy model and observational dataset may be kept in user scrip
 see  example_forstand.py  for a complete example of fitting procedures.
 '''
 
-import numpy as _numpy, agama as _agama
+import numpy as _numpy, agama as _agama, os as _os
 
 ### -------------------------------------------- ###
 ### Specific tools for Multi-Gaussian expansions ###
@@ -981,12 +981,15 @@ def runModel(datasets, potential, ic, Omega=0, intTime=100.0,
     MOD_VEL_X0 = []
     MOD_RAD_X0 = []
     Rm, Lz, L2 = _numpy.zeros((3, len(trajs)))
+    if save_orbits == True:
+        _os.mkdir(save_orbits_to + f'/orbits_{filePrefix[:30]}')
+    
     for iorb, orb in enumerate(trajs):
         # construct regularly-spaced trajectory from the interpolator
         t = orb(_numpy.linspace(0.0005, 0.9995, 1000) * (orb[-1]-orb[0]) + orb[0])
         if save_orbits == True:
             #with open(f'/home/denis/projects/agama/Gal/Chemo-dynamical_modeling/PGC_35706/orbits/orbit_{iorb}.txt', mode='wt', encoding='utf-8') as f:
-            with open(save_orbits_to + f'/orbits/orbit_{iorb}.txt', mode='wt', encoding='utf-8') as f:
+            with open(save_orbits_to + f'/orbits_{filePrefix[:30]}/orbit_{iorb}.txt', mode='wt', encoding='utf-8') as f:
                 for line in t:
                     f.write(' '.join([str(l) for l in line]) + "\n")
 
@@ -1080,7 +1083,7 @@ def runModel(datasets, potential, ic, Omega=0, intTime=100.0,
             for j in range(21):
                 MOD_weights_mult_matrices[i][j] = _numpy.zeros_like(weights)
         for orbi in range(0,len(Rm)-1):
-            if Rm[orbi] < _numpy.mean(Rm)*3 and lambda_z[orbi] <= 1:
+            if Rm[orbi] < _numpy.mean(Rm)*3 and lambda_z[orbi] <= 1 and lambda_z[orbi] >= -1:
                 MOD_weights_mult_matrices[int(round((1 + lambda_z[orbi])*10))][int(round((Rm[orbi]/(_numpy.mean(Rm)*3))*20))][orbi] = weights[orbi]
             #else:
                 #print(int(round((1 + lambda_z[orbi])*10)),int(round((Rm[orbi]/(_numpy.mean(Rm)*3))*20)))

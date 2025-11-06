@@ -436,7 +436,7 @@ from adamet.adamet import adamet
 def bestfit_adamet():
 
     RHalo,VHalo=150,180
-    nstep=40
+    nstep=1
     pars0 = numpy.array([RHalo,VHalo])    # Starting guess
     #fargs = (RHalo,VHalo)   # Parameters to pass to the lnprob function
     sigpar = [20, 20]     # Order of magnitude of the uncertainties
@@ -456,6 +456,6 @@ bestfit,sig_bestfit = bestfit_adamet()
 numpy.savetxt("bestfit.txt",[bestfit,sig_bestfit])
 numOrbits = 40000
 save_orb = True
-save_orbits_to = "/data1/vgorad/dynam_mod/Dynamical_modelling/Gal/chemo-dynamical_modeling/PGC_35706" #[REQ].../Chemo-dynamical_modeling/PGC_35706
+save_orbits_to = "" #[REQ].../Chemo-dynamical_modeling/PGC_35706
 
 lnprob_fun(bestfit)

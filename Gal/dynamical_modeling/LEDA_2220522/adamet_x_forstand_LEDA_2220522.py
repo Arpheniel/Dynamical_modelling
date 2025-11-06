@@ -164,6 +164,8 @@ seed      = int  (args.get('SEED', 0))          # [OPT] random seed (different v
 nbody     = int  (args.get('NBODY', 100000))    # [OPT] number of particles for the N-body representation of the best-fit model
 nbodyFormat = args.get('NBODYFORMAT', 'text')   # [OPT] format for storing N-body snapshots (text/nemo/gadget)
 command   = args.get('DO', '').upper()          # [REQ] operation mode: 'RUN' - run a model, 'PLOT' - show the model grid and maps, 'TEST' - show diagnostic plots, 'MOCK' - create mock maps
+save_orb = True
+save_orbits_to = "/home/denis/projects/agama/Gal/Chemo-dynamical_modeling/LEDA_2220522" 
 usehist   = args.get('HIST', 'n')[0] in 'yYtT1' # [OPT] whether to use LOSVD histograms as input (default 'no' is to use GH moments)
 variant   = 'Hist' if usehist else 'GH'         # suffix for disinguishing runs using histogramed LOSVDs or GH moments
 fileResult= 'results%s.txt' % variant           # [OPT] filename for collecting summary results for the entire model grid
@@ -434,7 +436,7 @@ from adamet.adamet import adamet
 def bestfit_adamet():
 
     RHalo,VHalo=150,250
-    nstep=40
+    nstep=1
     pars0 = numpy.array([RHalo,VHalo])    # Starting guess
     #fargs = (RHalo,VHalo)   # Parameters to pass to the lnprob function
     sigpar = [20, 20]     # Order of magnitude of the uncertainties
@@ -452,8 +454,8 @@ def bestfit_adamet():
     return bestfit, sig_bestfit
 bestfit,sig_bestfit = bestfit_adamet()
 numpy.savetxt("bestfit.txt",[bestfit,sig_bestfit])
-numOrbits = 40000
+numOrbits = 30000
 save_orb = True
-save_orbits_to = "/data1/vgorad/dynam_mod/Dynamical_modelling/Gal/chemo-dynamical_modeling/LEDA_2220522" #[REQ].../Chemo-dynamical_modeling/LEDA_2220522
+save_orbits_to = "/home/denis/projects/agama/Gal/Chemo-dynamical_modeling/LEDA_2220522" #[REQ].../Chemo-dynamical_modeling/LEDA_2220522
 
 lnprob_fun(bestfit)
