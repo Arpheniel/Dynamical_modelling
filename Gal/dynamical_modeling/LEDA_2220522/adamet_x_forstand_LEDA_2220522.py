@@ -164,10 +164,10 @@ seed      = int  (args.get('SEED', 0))          # [OPT] random seed (different v
 nbody     = int  (args.get('NBODY', 100000))    # [OPT] number of particles for the N-body representation of the best-fit model
 nbodyFormat = args.get('NBODYFORMAT', 'text')   # [OPT] format for storing N-body snapshots (text/nemo/gadget)
 command   = args.get('DO', '').upper()          # [REQ] operation mode: 'RUN' - run a model, 'PLOT' - show the model grid and maps, 'TEST' - show diagnostic plots, 'MOCK' - create mock maps
-save_orb = True
-save_orbits_to = "/home/denis/projects/agama/Gal/Chemo-dynamical_modeling/LEDA_2220522" 
 usehist   = args.get('HIST', 'n')[0] in 'yYtT1' # [OPT] whether to use LOSVD histograms as input (default 'no' is to use GH moments)
 variant   = 'Hist' if usehist else 'GH'         # suffix for disinguishing runs using histogramed LOSVDs or GH moments
+save_orb = False
+save_orbits_to = ""
 fileResult= 'results%s.txt' % variant           # [OPT] filename for collecting summary results for the entire model grid
 numpy.random.seed(32)                           # [OPT] make things repeatable when generating mock data (*not* related to the seed for the orbit library)
 numpy.set_printoptions(precision=4, linewidth=9999, suppress=True)
@@ -425,7 +425,7 @@ def lnprob_fun(pars0):
             # [OPT] results/summary file
             fileResult = fileResult,
             # [OPT] parameters for the N-body snapshot representing the best-fit model
-            nbody = nbody, nbodyFormat = nbodyFormat )
+            nbody = nbody, nbodyFormat = nbodyFormat,save_orbits = save_orb, save_orbits_to = save_orbits_to )
             
     else:
         exit('Nothing to do!')
@@ -436,7 +436,7 @@ from adamet.adamet import adamet
 def bestfit_adamet():
 
     RHalo,VHalo=150,250
-    nstep=1
+    nstep=40
     pars0 = numpy.array([RHalo,VHalo])    # Starting guess
     #fargs = (RHalo,VHalo)   # Parameters to pass to the lnprob function
     sigpar = [20, 20]     # Order of magnitude of the uncertainties
@@ -454,8 +454,8 @@ def bestfit_adamet():
     return bestfit, sig_bestfit
 bestfit,sig_bestfit = bestfit_adamet()
 numpy.savetxt("bestfit.txt",[bestfit,sig_bestfit])
-numOrbits = 30000
+numOrbits = 40000
 save_orb = True
-save_orbits_to = "/home/denis/projects/agama/Gal/Chemo-dynamical_modeling/LEDA_2220522" #[REQ].../Chemo-dynamical_modeling/LEDA_2220522
+save_orbits_to = "/data1/vgorad/dynam_mod/Dynamical_modelling/Gal/chemo-dynamical_modeling/LEDA_2220522" #[REQ].../Chemo-dynamical_modeling/LEDA_2220522
 
 lnprob_fun(bestfit)

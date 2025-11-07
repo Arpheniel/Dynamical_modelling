@@ -982,14 +982,14 @@ def runModel(datasets, potential, ic, Omega=0, intTime=100.0,
     MOD_RAD_X0 = []
     Rm, Lz, L2 = _numpy.zeros((3, len(trajs)))
     if save_orbits == True:
-        _os.mkdir(save_orbits_to + f'/orbits_{filePrefix[:30]}')
+        _os.mkdir(save_orbits_to + f'/orbits_{filePrefix[:35]}')
     
     for iorb, orb in enumerate(trajs):
         # construct regularly-spaced trajectory from the interpolator
         t = orb(_numpy.linspace(0.0005, 0.9995, 1000) * (orb[-1]-orb[0]) + orb[0])
         if save_orbits == True:
             #with open(f'/home/denis/projects/agama/Gal/Chemo-dynamical_modeling/PGC_35706/orbits/orbit_{iorb}.txt', mode='wt', encoding='utf-8') as f:
-            with open(save_orbits_to + f'/orbits_{filePrefix[:30]}/orbit_{iorb}.txt', mode='wt', encoding='utf-8') as f:
+            with open(save_orbits_to + f'/orbits_{filePrefix[:35]}/orbit_{iorb}.txt', mode='wt', encoding='utf-8') as f:
                 for line in t:
                     f.write(' '.join([str(l) for l in line]) + "\n")
 
