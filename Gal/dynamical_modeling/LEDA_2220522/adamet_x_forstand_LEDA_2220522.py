@@ -440,7 +440,7 @@ def bestfit_adamet():
     pars0 = numpy.array([RHalo,VHalo])    # Starting guess
     #fargs = (RHalo,VHalo)   # Parameters to pass to the lnprob function
     sigpar = [20, 20]     # Order of magnitude of the uncertainties
-    bounds = numpy.array([[100, 100], [300, 300]])  # [[min(RHalo), min(VHalo)], [max(RHalo), max(VHalo)]]
+    bounds = numpy.array([[100, 100], [350, 350]])  # [[min(RHalo), min(VHalo)], [max(RHalo), max(VHalo)]]
     
     pars, lnprob = adamet(lnprob_fun, pars0, sigpar, bounds, nstep,
                           nprint=nstep/3, labels=['RHalo', 'VHalo'])
